@@ -1,8 +1,5 @@
 import os
 import streamlit as st
-import toml
-import pathlib
-
 import pandas as pd
 import random
 import smtplib
@@ -112,10 +109,6 @@ if "author_name" not in st.session_state:
             st.rerun()
     else:
         st.stop()
-
-if "author_name" in st.session_state:
-    author_name = st.session_state.author_name
-    st.markdown(f"**Author:** {author_name}")
 else:
     author_name = st.session_state.author_name
     st.markdown(f"**Author:** {author_name}")
@@ -131,23 +124,15 @@ else:
     if not st.session_state.image_order:
         st.session_state.image_order = get_randomized_images([])
     image_files = st.session_state.image_order
-    # For batch mode, only show the current batch
-    if st.session_state.batch_size > 0:
-        batch_start = st.session_state.batch_start
-        batch_end = min(batch_start + st.session_state.batch_size, len(image_files))
-        batch_files = image_files[batch_start:batch_end]
-        total_images = len(batch_files)
-    else:
-        batch_files = image_files
-        total_images = len(image_files)
+    total_images = len(image_files)
+
+# Always initialize image_files and total_images before use
+image_files = st.session_state.image_order if "image_order" in st.session_state and st.session_state.image_order else []
+total_images = len(image_files)
 
 
 # Progress bar
-if st.session_state.batch_size > 0:
-    batch_progress = st.session_state.img_idx - st.session_state.batch_start
-    st.progress(batch_progress / total_images if total_images > 0 else 0, text=f"Progress: {batch_progress}/{total_images} images scored in this batch")
-else:
-    st.progress(st.session_state.img_idx / total_images if total_images > 0 else 0, text=f"Progress: {st.session_state.img_idx}/{total_images} images scored")
+st.progress(st.session_state.img_idx / total_images if total_images > 0 else 0, text=f"Progress: {st.session_state.img_idx}/{total_images} images scored")
 
 
 # Prompt for batch size if not set, only after author is selected
@@ -173,7 +158,7 @@ if author_name and st.session_state.batch_size == 0:
 # Main scoring loop
 
 batch_end = min(st.session_state.batch_start + st.session_state.batch_size, len(image_files))
-if st.session_state.batch_size > 0 and st.session_state.img_idx < batch_end:
+if st.session_state.img_idx < batch_end:
     img_file = image_files[st.session_state.img_idx]
     st.image(os.path.join(RAW_IMG_DIR, img_file), use_container_width=True)
     st.write("Select a score for this image:")
@@ -197,53 +182,6 @@ if st.session_state.batch_size > 0 and st.session_state.img_idx < batch_end:
             df_tmp.to_csv(get_cache_path(author_name), index=False)
             st.rerun()
     st.image(GUIDE_IMG_PATH, caption="gScore Guide", use_container_width=True)
-elif st.session_state.img_idx < len(image_files) and st.session_state.img_idx >= batch_end:
-    st.success(f"Batch of {st.session_state.batch_size} images scored!")
-    df = pd.DataFrame(st.session_state.scores)
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_path = f"/home/nai/graftscore/gScorer-beta/{author_name}_scores_{timestamp_str}.csv"
-    df.to_csv(csv_path, index=False)
-    def send_email_with_attachment(subject, body, to_email, attachment_path):
-        SMTP_SERVER = st.secrets["SMTP_SERVER"]
-        SMTP_PORT = int(st.secrets["SMTP_PORT"])
-        SMTP_USER = st.secrets["SMTP_USER"]
-        SMTP_PASSWORD = st.secrets["SMTP_PASSWORD"]
-        SENDER_NAME = st.secrets["SENDER_NAME"]
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = f"{SENDER_NAME} <{SMTP_USER}>"
-        msg["To"] = to_email
-        msg.set_content(body)
-        with open(attachment_path, "rb") as f:
-            file_data = f.read()
-            file_name = os.path.basename(attachment_path)
-        msg.add_attachment(file_data, maintype="application", subtype="octet-stream", filename=file_name)
-        try:
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls()
-                server.login(SMTP_USER, SMTP_PASSWORD)
-                server.send_message(msg)
-            st.success("Batch results have been emailed.")
-        except Exception as e:
-            st.error(f"Failed to send email: {e}")
-    RECIPIENT_EMAIL = st.secrets["RECIPIENT_EMAIL"]
-    send_email_with_attachment(
-        subject=f"gScorer Output Submitted by {author_name}",
-        body=f"Scores for {author_name} (batch) are attached.",
-        to_email=RECIPIENT_EMAIL,
-        attachment_path=csv_path
-    )
-    st.write("Would you like to score another batch?")
-    col1, col2 = st.columns(2)
-    if col1.button("Score Another Batch", key="next_batch_choice"):
-        st.session_state.batch_size = 0
-        st.session_state.batch_start = st.session_state.img_idx
-        st.rerun()
-    if col2.button("Finish & Email Results", key="finish_batch_choice"):
-        st.session_state.batch_size = 0
-        st.session_state.batch_start = 0
-        st.rerun()
-    st.stop()
 elif st.session_state.img_idx < len(image_files):
     st.success(f"Batch of {st.session_state.batch_size} images scored!")
     # Email after every batch
