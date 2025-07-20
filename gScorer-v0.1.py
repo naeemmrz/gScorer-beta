@@ -11,7 +11,9 @@ GUIDE_IMG_PATH = "gScoreGuide.png"
 
 
 def get_cache_path(author):
-    return f"/home/nai/graftscore/gScorer-beta/{author}_scores_tmp.csv"
+    output_dir = os.path.join(os.getcwd(), "gScorer-output")
+    os.makedirs(output_dir, exist_ok=True)
+    return os.path.join(output_dir, f"{author}_scores_tmp.csv")
 
 def get_image_files():
     exts = (".png", ".jpg", ".jpeg", ".bmp", ".gif")
@@ -189,8 +191,9 @@ elif st.session_state.img_idx < len(image_files):
     # Email after every batch
     df = pd.DataFrame(st.session_state.scores)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_path = f"/home/nai/graftscore/gScorer-beta/{author_name}_scores_{timestamp_str}.csv"
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    output_dir = os.path.join(os.getcwd(), "gScorer-output")
+    os.makedirs(output_dir, exist_ok=True)
+    csv_path = os.path.join(output_dir, f"{author_name}_scores_{timestamp_str}.csv")
     df.to_csv(csv_path, index=False)
     def send_email_with_attachment(subject, body, to_email, attachment_path):
         SMTP_SERVER = st.secrets["SMTP_SERVER"]
@@ -235,8 +238,9 @@ else:
     st.success("All images scored!")
     df = pd.DataFrame(st.session_state.scores)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_path = f"/home/nai/graftscore/gScorer-beta/{author_name}_scores_{timestamp_str}.csv"
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    output_dir = os.path.join(os.getcwd(), "gScorer-output")
+    os.makedirs(output_dir, exist_ok=True)
+    csv_path = os.path.join(output_dir, f"{author_name}_scores_{timestamp_str}.csv")
     df.to_csv(csv_path, index=False)
     # Remove cache after completion
     cache_path = get_cache_path(author_name)
