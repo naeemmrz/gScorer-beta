@@ -179,7 +179,9 @@ if st.session_state.img_idx < batch_end:
             st.session_state.img_idx += 1
             # Save cache after each score
             df_tmp = pd.DataFrame(st.session_state.scores)
-            df_tmp.to_csv(get_cache_path(author_name), index=False)
+            cache_path = get_cache_path(author_name)
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            df_tmp.to_csv(cache_path, index=False)
             st.rerun()
     st.image(GUIDE_IMG_PATH, caption="gScore Guide", use_container_width=True)
 elif st.session_state.img_idx < len(image_files):
@@ -188,6 +190,7 @@ elif st.session_state.img_idx < len(image_files):
     df = pd.DataFrame(st.session_state.scores)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     csv_path = f"/home/nai/graftscore/gScorer-beta/{author_name}_scores_{timestamp_str}.csv"
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     df.to_csv(csv_path, index=False)
     def send_email_with_attachment(subject, body, to_email, attachment_path):
         SMTP_SERVER = st.secrets["SMTP_SERVER"]
@@ -233,6 +236,7 @@ else:
     df = pd.DataFrame(st.session_state.scores)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     csv_path = f"/home/nai/graftscore/gScorer-beta/{author_name}_scores_{timestamp_str}.csv"
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     df.to_csv(csv_path, index=False)
     # Remove cache after completion
     cache_path = get_cache_path(author_name)
