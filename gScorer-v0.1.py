@@ -141,7 +141,7 @@ st.progress(st.session_state.img_idx / total_images if total_images > 0 else 0, 
 if author_name and st.session_state.batch_size == 0:
     st.write("How many images can you score right now?")
     total_remaining = len(image_files) - st.session_state.img_idx
-    batch_options = [5, 50, 100, 150, 200]
+    batch_options = [25, 50, 100, 150, 200]
     batch_labels = [str(opt) for opt in batch_options] + [f"All ({total_remaining})"]
     cols = st.columns(len(batch_labels))
     for idx, col in enumerate(cols):
