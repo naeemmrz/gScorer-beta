@@ -225,9 +225,9 @@ elif st.session_state.img_idx < len(image_files):
         to_email=RECIPIENT_EMAIL,
         attachment_path=csv_path
     )
-    if st.button("Another 50? Please?", key="next_batch"):
+    if st.button("Can do more? 25 more?", key="next_batch"):
         st.session_state.batch_start = st.session_state.img_idx
-        st.session_state.batch_size = 50
+        st.session_state.batch_size = 25
         st.rerun()
     if st.button("Finish & Email Results", key="finish_batch"):
         st.session_state.batch_size = 0
